@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "ms-api-gateway"
+name = "ms-logistica"
 version = "0.1.0"
 description = "Microservicio FastAPI en Python 3.13 para Cloud Run"
 authors = ["G17 <team@example.com>"]
@@ -13,7 +13,7 @@ packages = [
 python = "^3.13"
 fastapi = ">=0.110"
 uvicorn = { extras = ["standard"], version = ">=0.29" }
-pydantic = ">=2.7"
+pydantic = {extras = ["email"], version = "^2.12.2"}
 pydantic-settings = ">=2.2"
 sqlalchemy = { extras = ["asyncio"], version = ">=2.0" }
 asyncpg = ">=0.29"
@@ -22,6 +22,7 @@ google-cloud-pubsub = ">=2.21"
 google-cloud-bigquery = ">=3.25"
 google-cloud-bigtable = ">=2.24"
 google-cloud-storage = ">=2.18"
+psycopg2-binary = "^2.9"
 
 [tool.poetry.group.dev.dependencies]
 pytest = ">=8.2"
@@ -38,3 +39,4 @@ build-backend = "poetry.core.masonry.api"
 minversion = "8.0"
 addopts = "--cov=src --cov-report=term-missing:skip-covered --cov-report=xml"
 testpaths = ["tests"]
+asyncio_mode = "auto"
