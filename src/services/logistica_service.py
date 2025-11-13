@@ -15,6 +15,7 @@ from src.domain.models import RutaEntrega, Parada, ParadaPedido, RutaEstado, Par
 from src.dependencies import AuditContext
 from src.config import Settings
 from src.infrastructure.http import MsClient
+from src.infrastructure.infrastructure import publish_event
 
 logger = logging.getLogger(__name__)
 
