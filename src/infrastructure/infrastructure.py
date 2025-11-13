@@ -56,5 +56,3 @@ def publish_event(data: dict, topic_path: str) -> None:
     """
     payload = json.dumps(data, ensure_ascii=False, default=str).encode("utf-8")
     future = get_publisher().publish(topic_path, payload)
-    # En proyecto académico puedes cambiarlo a fire-and-forget si quieres
-    future.result(timeout=5)
