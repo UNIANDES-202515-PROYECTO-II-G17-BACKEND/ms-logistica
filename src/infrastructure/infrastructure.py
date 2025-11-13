@@ -1,12 +1,15 @@
 from contextlib import contextmanager
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
+from google.cloud import pubsub_v1
 from src.config import settings
 from typing import Optional
 from redis import Redis
+import json
 
 engine = create_engine(settings.SQLALCHEMY_DATABASE_URI, pool_pre_ping=True)
 _redis_client: Optional[Redis] = None
+_publisher: Optional[pubsub_v1.PublisherClient] = None
 
 SessionLocal = sessionmaker(
     bind=engine,
@@ -32,3 +35,26 @@ def get_redis() -> Optional[Redis]:
     if _redis_client is None:
         _redis_client = Redis(host=settings.REDIS_HOST, port=int(settings.REDIS_PORT), decode_responses=True)
     return _redis_client
+
+def get_publisher() -> pubsub_v1.PublisherClient:
+    """
+    Devuelve un PublisherClient singleton, inicializado de forma lazy.
+    Esto evita que se creen credenciales en import time (útil para tests).
+    """
+    global _publisher
+    if _publisher is None:
+        _publisher = pubsub_v1.PublisherClient()
+    return _publisher
+
+
+def publish_event(data: dict, topic_path: str) -> None:
+    """
+    Publica un evento en Pub/Sub.
+
+    :param data: dict serializable a JSON
+    :param topic_path: 'projects/.../topics/...'
+    """
+    payload = json.dumps(data, ensure_ascii=False, default=str).encode("utf-8")
+    future = get_publisher().publish(topic_path, payload)
+    # En proyecto académico puedes cambiarlo a fire-and-forget si quieres
+    future.result(timeout=5)

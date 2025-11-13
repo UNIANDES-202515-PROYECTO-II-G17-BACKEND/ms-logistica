@@ -122,6 +122,39 @@ def _ms_pedido_marcar_despachado(ms: MsClient, pedido_id: str) -> bool:
     logger.error("No se pudo marcar DESPACHADO pedido_id=%s. Último error: %s", pedido_id, last_exc)
     return False
 
+def _emit_pedido_despachado_event(pedido_id: UUID, x_country: str, audit: AuditContext) -> bool:
+    """
+    Publica el evento 'pedido_despachado' en el tópico de pedidos.
+
+    ms-pedidos debe tener una suscripción a ese tópico y manejar el evento
+    en su endpoint /pubsub (event == 'pedido_despachado').
+    """
+    topic = Settings.TOPIC_PEDIDOS
+    if not topic:
+        logger.error("TOPIC_PEDIDOS no configurado; no se puede emitir evento pedido_despachado")
+        return False
+
+    event = {
+        "event": "pedido_despachado",
+        "pedido_id": str(pedido_id),
+        "ctx": {
+            "country": audit.country or settings.DEFAULT_SCHEMA,
+            "request_id": getattr(audit, "request_id", None),
+            "user_id": getattr(audit, "user_id", None),
+            "ip": getattr(audit, "ip", None),
+        },
+    }
+
+    try:
+        logger.info("Emitiendo evento pedido_despachado: %s", event)
+        publish_event(event, topic)
+        return True
+    except Exception as e:
+        logger.error(
+            "No se pudo publicar evento pedido_despachado pedido_id=%s en topic=%s: %s",
+            pedido_id, topic, e,
+        )
+        return False
 
 # ---------- Casos de uso ----------
 
@@ -227,11 +260,11 @@ def generar_ruta(
         except Exception as e:
             logger.warning("No se marca DESPACHADO (id inválido) %r: %s", pid_raw, e)
             continue
-        ok = _ms_pedido_marcar_despachado(ms, str(pid_uuid))
+        ok = _emit_pedido_despachado_event(pid_uuid, x_country, audit)
         all_ok = all_ok and ok
 
     if not all_ok:
-        logger.warning("Algunos pedidos no se marcaron DESPACHADO en ms-pedidos. ruta_id=%s", ruta.id)
+        logger.warning("Algunos pedidos no se marcaron DESPACHADO vía evento. ruta_id=%s",ruta.id,)
 
     logger.info("Generar ruta finalizado: ruta_id=%s", ruta.id)
     return ruta

@@ -34,4 +34,10 @@ class Settings:
         "estado": "APROBADO"
     }
 
+    TOPIC_PEDIDOS = os.getenv("TOPIC_PEDIDOS")
+    TOPIC_INVENTARIO = os.getenv("TOPIC_INVENTARIO")
+    TOPIC_LOGISTICA = os.getenv("TOPIC_LOGISTICA")
+    TOPIC_VENTAS_CRM = os.getenv("TOPIC_VENTAS_CRM")
+    TOPIC_TELEMETRIA = os.getenv("TOPIC_TELEMETRIA")
+
 settings = Settings()
